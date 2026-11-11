@@ -257,59 +257,8 @@ File| Purpose
 
 Repository scope: These files are reference code snippets illustrating selected FinPay design concepts. They do not, by themselves, constitute a complete deployable wallet application.
 
-9. Technology and Concepts
 
-The reference materials demonstrate or describe the following technologies and concepts:
-
-Area| Technology / Concept
-Programming| Python
-Database| SQLite schema example
-Database Language| SQL
-Data Modeling| Relational database design
-Normalization| Third Normal Form (3NF)
-Financial Calculations| Integer paise arithmetic
-Transaction Integrity| ACID transaction principles
-Duplicate Prevention| Idempotency keys
-Cashback Processing| Tier-based rule calculation
-Monthly Limits| Aggregate SQL queries
-
-These are the technologies and concepts represented in the reference snippets and design. They should not be interpreted as a declaration of a fully integrated production technology stack.
-
-10. Running the Reference Examples
-
-Prerequisites
-
-- Python 3.x
-- SQLite support
-- A code editor such as Visual Studio Code
-
-Step 1: Clone the Repository
-
-git clone https://github.com/YOUR-USERNAME/finpay-campus-digital-wallet.git
-
-Step 2: Navigate to the Project
-
-cd finpay-campus-digital-wallet
-
-Step 3: Review the Python Examples
-
-python 01_calculate_cashback.py
-
-Run the remaining Python files individually according to their purpose.
-
-Step 4: Review the SQL Schema
-
-Open the SQL file using an SQLite-compatible database tool or execute it through an SQLite connection.
-
-sqlite3 finpay.db
-
-Then:
-
-.read 03_finpay_3nf_schema_sqlite.sql
-
-Important: The examples are independent reference components. They may require additional integration, test data, or configuration before they can be executed as a complete application.
-
-11. Validation and Testing Considerations
+9. Validation and Testing Considerations
 
 The following cases should be considered when validating the cashback and payment logic.
 
@@ -327,7 +276,7 @@ Payment operation failure| Database transaction rolled back
 
 These are validation scenarios, not claims that every test has already been executed.
 
-12. Design Decisions and Engineering Considerations
+10. Design Decisions and Engineering Considerations
 
 Design Decision| Engineering Benefit
 Integer paise representation| Avoids floating-point monetary inaccuracies
@@ -338,8 +287,7 @@ Atomic database operations| Maintains consistency during failures
 Tier-based cashback rules| Supports configurable reward levels
 Category-specific cashback caps| Controls cashback eligibility
 
-
-13. Conclusion
+11. Conclusion
 
 FinPay demonstrates the design of a campus-oriented digital wallet and cashback management system with emphasis on database structure, financial calculation accuracy, transaction integrity, and configurable reward rules.
 
