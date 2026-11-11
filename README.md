@@ -1,105 +1,347 @@
-FinPay – Campus Digital Wallet and Cashback System
+FinPay – Campus Digital Wallet & Cashback Management System
 
-Project Overview
+A Database-Driven Digital Wallet System with Tier-Based Cashback, Transaction Management, and Monthly Cashback Limits
 
-FinPay is a campus digital wallet and cashback system designed to manage student wallets, merchant payments, and tier-based cashback rewards.
+---
 
-The system uses a layered architecture and reuses the existing JWT authentication infrastructure.
+1. Project Overview
 
-Key Features
+FinPay is a campus-focused digital wallet and cashback management system designed to simplify cashless transactions between students and campus merchants.
 
-- Student wallet management
-- Wallet balance tracking
-- Merchant and category management
-- BASIC, PRIME and PREMIUM membership tiers
-- Category-based cashback calculation
-- Monthly cashback limits
-- Payment transaction management
-- Duplicate payment protection using idempotency keys
-- Secure wallet access using JWT authentication
+The system provides a structured approach to wallet management, payment processing, merchant categorization, and cashback calculation. It incorporates tier-based cashback benefits and monthly cashback limits to support controlled and transparent reward distribution.
 
-Technology and Design
+The project focuses on relational database design, data integrity, transaction consistency, and the implementation of business rules through a structured data model.
 
-- Backend: Python
-- Database: Relational Database (RDBMS)
-- Authentication: Existing JWT infrastructure
-- Database Design: Entity Relationship Modelling and 3NF
-- Query Design: SQL
-- Architecture: Layered Architecture
+2. Key Objectives
 
-Cashback Categories
+- Design a normalized relational database for a campus digital wallet ecosystem.
+- Manage student wallet accounts and wallet tiers.
+- Support merchant-based transaction categorization.
+- Calculate cashback using category-specific rates.
+- Apply tier-based cashback multipliers.
+- Enforce monthly cashback limits.
+- Maintain transaction history for accurate cashback calculations.
+- Prevent duplicate transaction processing through idempotency.
+- Ensure consistency between payment processing and wallet updates.
 
-Category| BASIC Cashback Rate
-CANTEEN| 2%
-STATIONERY| 1%
-TRANSPORT| 3%
-HOSTEL| 0.5%
-ONLINE| 1%
-TOPUP| 0%
+3. System Architecture
 
-Wallet Tiers
+FinPay follows a layered system-design approach that separates client interaction, business logic, and data persistence.
 
-Tier| Cashback Multiplier| Cap Multiplier
-BASIC| 1.0x| 1.0x
-PRIME| 1.5x| 1.5x
-PREMIUM| 2.0x| 2.0x
+              STUDENT / MERCHANT
+                      |
+                      v
+               APPLICATION LAYER
+                      |
+                      v
+              AUTHENTICATION LAYER
+                      |
+                      v
+                BUSINESS LOGIC
+             /        |         \
+            /         |          \
+       Payment     Cashback     Wallet
+      Processing   Calculation  Management
+            \         |          /
+             \        |         /
+                      v
+                DATABASE LAYER
+                      |
+                      v
+              RELATIONAL DATABASE
 
-Database Design
+Core processing flow:
 
-The normalized database consists of six main entities:
+1. A student initiates a payment.
+2. The application validates the transaction request.
+3. The system identifies the associated wallet and merchant category.
+4. Cashback eligibility is evaluated.
+5. The applicable tier multiplier and monthly limit are considered.
+6. The transaction and associated wallet operations are designed to execute consistently.
+7. The transaction is recorded for future reference and cashback calculations.
 
-1. STUDENT
-2. WALLET
-3. WALLET_TIER
-4. MERCHANT
-5. CASHBACK_RULE
-6. TRANSACTION
+Note: This diagram represents the proposed system architecture. It should not be interpreted as proof that every layer has been fully integrated.
 
-The database uses primary keys, foreign keys, unique constraints and check constraints to maintain data integrity.
+4. Core Modules
 
-Cashback Calculation
+4.1 Student Management
 
-Cashback is calculated using integer paise and basis-point rates.
+Maintains student-related information and establishes the relationship between students and their wallets.
 
-The calculation applies a single floor operation to avoid floating-point precision errors.
+4.2 Wallet Management
 
-Monthly cashback is derived from transaction history using SQL aggregation and is restricted by the applicable wallet tier's monthly cap.
+Handles wallet account information and provides the foundation for wallet-related operations.
 
-Security Design
+4.3 Merchant Management
 
-- Reuse of existing JWT authentication.
-- Student-specific wallet authorization.
-- Wallet identity resolved on the server.
-- Unique wallet-scoped idempotency keys.
-- Atomic payment and wallet updates.
-- Database constraints for transaction integrity.
+Maintains merchant information and associates merchants with transaction categories.
 
-Repository Structure
+4.4 Transaction Management
 
-finpay-campus-digital-wallet/
+Maintains payment transaction records and supports transaction-history-based calculations.
+
+4.5 Cashback Calculation
+
+Calculates cashback based on:
+
+- Transaction amount
+- Merchant transaction category
+- Applicable cashback percentage
+- Student wallet tier
+- Remaining monthly cashback eligibility
+
+4.6 Wallet Tier Management
+
+Supports three cashback benefit levels:
+
+Tier| Cashback Multiplier| Monthly Cap Multiplier
+BASIC| 1.0×| 1.0×
+PRIME| 1.5×| 1.5×
+PREMIUM| 2.0×| 2.0×
+
+The tier multipliers are applied to the corresponding base cashback rules.
+
+5. Cashback Business Rules
+
+FinPay uses category-specific cashback rates and maximum cashback limits.
+
+5.1 Base Cashback Configuration
+
+Transaction Category| Cashback Rate| Maximum Cashback
+CANTEEN| 2%| ₹50
+STATIONERY| 1%| ₹20
+TRANSPORT| 3%| ₹100
+HOSTEL| 0.5%| ₹200
+ONLINE| 1%| ₹30
+TOPUP| 0%| ₹0
+
+5.2 Cashback Calculation
+
+The base cashback is determined using the transaction amount and the applicable category rate.
+
+Base Cashback = Transaction Amount × Cashback Rate
+
+The tier multiplier is then applied, followed by the applicable cashback limit.
+
+Adjusted Cashback = Base Cashback × Tier Multiplier
+
+Final Cashback = MIN(
+    Adjusted Cashback,
+    Tier-Adjusted Category Cap,
+    Remaining Monthly Cashback Limit
+)
+
+The exact calculation must use the same monetary precision and rounding rules throughout the system.
+
+5.3 Monetary Precision
+
+All monetary values should be represented as integer paise rather than floating-point rupee values.
+
+For example:
+
+₹100.50 = 10050 paise
+
+This avoids floating-point precision problems in financial calculations.
+
+The calculation should use integer arithmetic and apply flooring only at the final cashback calculation stage.
+
+5.4 Monthly Cashback Limit
+
+Monthly cashback eligibility is calculated from transaction history.
+
+The monthly cashback total is derived using an aggregate "SUM" operation rather than maintaining an independent monthly cashback counter.
+
+This approach helps avoid inconsistencies between transaction records and separately maintained totals.
+
+6. Database Design
+
+The database design consists of six primary entities.
+
+Entity| Responsibility
+STUDENT| Stores student information
+WALLET| Maintains student wallet information
+WALLET_TIER| Defines cashback benefit tiers
+MERCHANT| Stores merchant information and categories
+CASHBACK_RULE| Defines category-based cashback rules
+TRANSACTION| Maintains payment transaction records
+
+Entity Relationships
+
+STUDENT
+   |
+   | 1 : 1 (as designed)
+   |
+ WALLET
+   |
+   | N : 1
+   |
+WALLET_TIER
+
+MERCHANT
+   |
+   | 1 : N
+   |
+TRANSACTION
+   |
+   | N : 1
+   |
+ WALLET
+
+CASHBACK_RULE
+   |
+   | Category-based rule association
+   |
+TRANSACTION
+
+The relationship diagram is a conceptual representation. Final cardinalities and foreign-key constraints should match the implemented schema.
+
+Database Design Principles
+
+- Use primary keys to uniquely identify records.
+- Use foreign keys to maintain referential integrity.
+- Apply appropriate "NOT NULL", "UNIQUE", and "CHECK" constraints.
+- Avoid unnecessary duplicate storage.
+- Maintain transaction history for auditability.
+- Follow Third Normal Form (3NF) principles in the relational design.
+
+7. Data Integrity and Transaction Consistency
+
+Financial transactions require strong consistency guarantees.
+
+FinPay incorporates the following design considerations:
+
+Idempotency
+
+A unique constraint on the wallet and idempotency key prevents duplicate processing of the same payment request.
+
+UNIQUE (WalletID, IdempotencyKey)
+
+Atomic Payment Processing
+
+Payment processing and related wallet updates should be performed within a single database transaction.
+
+If an operation fails, the transaction should be rolled back to prevent partially applied updates.
+
+Server-Side Wallet Identification
+
+Wallet identity should be resolved and validated by the application server rather than trusted directly from an unverified client request.
+
+Transaction History
+
+Transaction records provide the basis for calculating monthly cashback totals and reviewing payment activity.
+
+8. Repository Structure
+
+The accompanying code-snippet collection is organized by functionality:
+
+FinPay/
 │
-├── src/
-├── database/
-├── tests/
-├── docs/
-├── README.md
-└── requirements.txt
+├── 01_calculate_cashback.py
+├── 02_monthly_cap.py
+├── 03_finpay_3nf_schema_sqlite.sql
+├── 04_monthly_cashback_sum.sql
+├── 05_payment_processing_design.py
+├── 06_cashback_expected_results.py
+├── 07_finpay_constants.py
+│
+└── README.md
 
-Adjust this structure to match the actual implementation before publishing.
+File| Purpose
+"01_calculate_cashback.py"| Cashback calculation logic
+"02_monthly_cap.py"| Monthly cashback limit handling
+"03_finpay_3nf_schema_sqlite.sql"| Relational database schema example
+"04_monthly_cashback_sum.sql"| Monthly cashback aggregation query
+"05_payment_processing_design.py"| Payment-processing design example
+"06_cashback_expected_results.py"| Expected cashback calculation examples
+"07_finpay_constants.py"| Cashback categories, rates, and tier constants
 
-Future Enhancements
+Repository scope: These files are reference code snippets illustrating selected FinPay design concepts. They do not, by themselves, constitute a complete deployable wallet application.
 
-- Payment history dashboard
-- Wallet transaction reports
-- Merchant analytics
-- Cashback notifications
-- Improved administrative dashboard
-- Deployment and production configuration
+9. Technology and Concepts
 
-Project Note
+The reference materials demonstrate or describe the following technologies and concepts:
 
-This repository documents the FinPay design and implementation components. Features should be marked as implemented only after integration and successful testing.
+Area| Technology / Concept
+Programming| Python
+Database| SQLite schema example
+Database Language| SQL
+Data Modeling| Relational database design
+Normalization| Third Normal Form (3NF)
+Financial Calculations| Integer paise arithmetic
+Transaction Integrity| ACID transaction principles
+Duplicate Prevention| Idempotency keys
+Cashback Processing| Tier-based rule calculation
+Monthly Limits| Aggregate SQL queries
 
-License
+These are the technologies and concepts represented in the reference snippets and design. They should not be interpreted as a declaration of a fully integrated production technology stack.
 
-No license has been assigned yet. Open-source distribution requires approval from the project owners.
+10. Running the Reference Examples
+
+Prerequisites
+
+- Python 3.x
+- SQLite support
+- A code editor such as Visual Studio Code
+
+Step 1: Clone the Repository
+
+git clone https://github.com/YOUR-USERNAME/finpay-campus-digital-wallet.git
+
+Step 2: Navigate to the Project
+
+cd finpay-campus-digital-wallet
+
+Step 3: Review the Python Examples
+
+python 01_calculate_cashback.py
+
+Run the remaining Python files individually according to their purpose.
+
+Step 4: Review the SQL Schema
+
+Open the SQL file using an SQLite-compatible database tool or execute it through an SQLite connection.
+
+sqlite3 finpay.db
+
+Then:
+
+.read 03_finpay_3nf_schema_sqlite.sql
+
+Important: The examples are independent reference components. They may require additional integration, test data, or configuration before they can be executed as a complete application.
+
+11. Validation and Testing Considerations
+
+The following cases should be considered when validating the cashback and payment logic.
+
+Test Scenario| Expected Behavior
+Valid eligible transaction| Cashback calculated using applicable rules
+TOPUP transaction| No cashback
+BASIC tier transaction| Base cashback multiplier applied
+PRIME tier transaction| 1.5× multiplier applied
+PREMIUM tier transaction| 2.0× multiplier applied
+Cashback exceeds category cap| Category cap enforced
+Monthly cashback limit reached| No additional monthly cashback
+Duplicate idempotency key| Duplicate processing prevented
+Invalid wallet reference| Transaction rejected
+Payment operation failure| Database transaction rolled back
+
+These are validation scenarios, not claims that every test has already been executed.
+
+12. Design Decisions and Engineering Considerations
+
+Design Decision| Engineering Benefit
+Integer paise representation| Avoids floating-point monetary inaccuracies
+Normalized relational schema| Reduces unnecessary data duplication
+Transaction-history aggregation| Keeps monthly cashback derived from recorded transactions
+Idempotency constraint| Helps prevent duplicate payment processing
+Atomic database operations| Maintains consistency during failures
+Tier-based cashback rules| Supports configurable reward levels
+Category-specific cashback caps| Controls cashback eligibility
+
+
+13. Conclusion
+
+FinPay demonstrates the design of a campus-oriented digital wallet and cashback management system with emphasis on database structure, financial calculation accuracy, transaction integrity, and configurable reward rules.
+
+Its design combines normalized relational data modeling with tier-based cashback computation and monthly eligibility controls, providing a foundation for developing a more comprehensive campus payment platform.
+
